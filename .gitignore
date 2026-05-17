@@ -1,0 +1,20 @@
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Runtime
+*.log
