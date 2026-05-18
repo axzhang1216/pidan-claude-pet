@@ -1,5 +1,6 @@
 pub mod paths;
 pub mod types;
+pub mod hook_event;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
