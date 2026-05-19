@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <title>皮蛋配置</title>
+    <style>
+      body { font: 14px system-ui; padding: 20px; background: #f5f5f5; }
+      h3 { margin: 0 0 16px; }
+      label { display:flex; align-items:center; gap:8px; margin: 10px 0; cursor:pointer; }
+      label span { color:#666; font-size:12px; }
+      .actions { margin-top: 20px; display:flex; gap:8px; }
+      button { padding:7px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
+      #save { background:#4a9eff; color:#fff; }
+      #save:hover { background:#2278cc; }
+      #reset-pos { background:#eee; }
+      #reset-pos:hover { background:#ddd; }
+    </style>
+  </head>
+  <body>
+    <h3>🐱 皮蛋配置</h3>
+    <label><input type="checkbox" id="toast"> 启用 Windows Toast 通知</label>
+    <label><input type="checkbox" id="sound" disabled> 启用猫叫声 <span>(v1.1)</span></label>
+    <label><input type="checkbox" id="autostart" disabled> 开机自启 <span>(安装后配置)</span></label>
+    <div class="actions">
+      <button id="reset-pos">重置窗口位置</button>
+      <button id="save">保存</button>
+    </div>
+    <script type="module" src="/src/config.ts"></script>
+  </body>
+</html>

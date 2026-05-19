@@ -1,20 +1,42 @@
 html, body {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  overflow: hidden;
-  user-select: none;
-  width: 100vw;
-  height: 100vh;
+  margin: 0; padding: 0; background: transparent; overflow: hidden;
+  user-select: none; width: 100vw; height: 100vh;
 }
 
-#pet {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 96px;
-  cursor: grab;
+.pet {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 96px; cursor: grab;
   -webkit-app-region: drag;
+  transition: filter 0.3s ease;
 }
+
+.pet.idle    { animation: breathe 4s ease-in-out infinite; }
+.pet.working { animation: sway 1.6s ease-in-out infinite; }
+.pet.waiting { animation: shake 0.6s ease-in-out infinite; filter: drop-shadow(0 0 8px gold); }
+.pet.done    { animation: jump 0.5s ease-out 1; }
+.pet.failed  { filter: drop-shadow(0 0 8px red); }
+
+@keyframes breathe { 0%,100% { transform: scale(1.0); } 50% { transform: scale(1.03); } }
+@keyframes sway    { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes shake   { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes jump    { 0% { transform: scale(1.0); } 30% { transform: scale(1.2); } 100% { transform: scale(1.0); } }
+
+#bubbles {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+  pointer-events: none;
+  max-width: 180px;
+}
+.bubble {
+  background: rgba(255, 255, 255, 0.92);
+  color: #222;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font: 12px/1.3 system-ui, sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  transition: opacity 0.6s ease;
+  opacity: 1;
+}
+.bubble.fade { opacity: 0; }

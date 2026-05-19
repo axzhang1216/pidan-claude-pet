@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <title>皮蛋面板</title>
+    <style>
+      html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+      body { background: rgba(28,28,32,0.92); color:#eee; border-radius: 10px; }
+      .panel-list { padding: 12px; font: 13px/1.5 system-ui, sans-serif; }
+      .row { display:flex; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid #333; }
+      .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+      .dot.working{background:#4af} .dot.waiting{background:gold} .dot.done{background:#5d5} .dot.failed{background:#e55} .dot.idle{background:#666}
+      .empty { color:#888; text-align:center; padding:24px; }
+      .proj { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .state-label { opacity:.7; font-size:11px; }
+    </style>
+  </head>
+  <body>
+    <div id="list" class="panel-list"></div>
+    <script type="module" src="/src/panel.ts"></script>
+  </body>
+</html>

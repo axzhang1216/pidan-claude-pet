@@ -24,6 +24,30 @@
         "skipTaskbar": true,
         "shadow": false,
         "url": "index.html"
+      },
+      {
+        "label": "panel",
+        "title": "皮蛋面板",
+        "width": 320,
+        "height": 240,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false,
+        "url": "panel.html"
+      },
+      {
+        "label": "config",
+        "title": "皮蛋配置",
+        "width": 360,
+        "height": 260,
+        "decorations": true,
+        "resizable": false,
+        "visible": false,
+        "url": "config.html"
       }
     ],
     "security": {
@@ -32,13 +56,22 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis"],
+    "publisher": "Pidan",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": false
+      }
+    }
   }
 }
