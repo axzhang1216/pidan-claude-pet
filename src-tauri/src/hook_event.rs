@@ -8,6 +8,8 @@ pub struct HookEvent {
     pub project: Option<String>,
     pub prompt: Option<String>,
     #[serde(default)]
+    pub msg: String,
+    #[serde(default)]
     pub raw: serde_json::Value,
 }
 

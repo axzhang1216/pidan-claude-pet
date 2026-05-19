@@ -42,15 +42,16 @@ impl AppState {
                     project,
                     title: evt.prompt.clone(),
                     state: State::Working,
+                    last_msg: evt.msg.clone(),
                     last_change: now,
                     last_seen: now,
                 };
                 self.sessions.insert(id.clone(), session);
                 vec![StateChange::Created(id)]
             }
-            HookEventType::UserPromptSubmit => self.transition(&id, State::Working, now, evt.prompt),
-            HookEventType::Stop => self.transition(&id, State::Done, now, None),
-            HookEventType::Notification => self.transition(&id, State::Waiting, now, None),
+            HookEventType::UserPromptSubmit => self.transition(&id, State::Working, now, evt.prompt, evt.msg),
+            HookEventType::Stop => self.transition(&id, State::Done, now, None, evt.msg),
+            HookEventType::Notification => self.transition(&id, State::Waiting, now, None, evt.msg),
             HookEventType::SessionEnd => {
                 if self.sessions.remove(&id).is_some() {
                     vec![StateChange::Removed(id)]
@@ -61,7 +62,7 @@ impl AppState {
         }
     }
 
-    fn transition(&mut self, id: &str, new: State, now: chrono::DateTime<Utc>, title: Option<String>) -> Vec<StateChange> {
+    fn transition(&mut self, id: &str, new: State, now: chrono::DateTime<Utc>, title: Option<String>, msg: String) -> Vec<StateChange> {
         if let Some(s) = self.sessions.get_mut(id) {
             let from = s.state;
             if from != new {
@@ -69,9 +70,11 @@ impl AppState {
                 s.last_change = now;
                 s.last_seen = now;
                 if title.is_some() { s.title = title; }
-                return vec![StateChange::Transitioned { id: id.into(), from, to: new }];
+                if !msg.is_empty() { s.last_msg = msg.clone(); }
+                return vec![StateChange::Transitioned { id: id.into(), from, to: new, msg }];
             } else {
                 s.last_seen = now;
+                if !msg.is_empty() { s.last_msg = msg; }
                 return vec![];
             }
         }
@@ -82,6 +85,7 @@ impl AppState {
             project: "unknown".into(),
             title,
             state: new,
+            last_msg: msg.clone(),
             last_change: now,
             last_seen: now,
         };
@@ -94,7 +98,7 @@ impl AppState {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum StateChange {
     Created(String),
-    Transitioned { id: String, from: State, to: State },
+    Transitioned { id: String, from: State, to: State, msg: String },
     Removed(String),
 }
 
@@ -113,6 +117,7 @@ mod tests {
             cwd: Some("D:/proj/foo".into()),
             project: None,
             prompt: None,
+            msg: String::new(),
             raw: serde_json::Value::Null,
         }
     }

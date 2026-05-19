@@ -17,6 +17,7 @@ pub struct Session {
     pub project: String,
     pub title: Option<String>,
     pub state: State,
+    pub last_msg: String,
     pub last_change: DateTime<Utc>,
     pub last_seen: DateTime<Utc>,
 }
@@ -61,6 +62,7 @@ mod tests {
             project: "foo".into(),
             title: None,
             state: State::Working,
+            last_msg: String::new(),
             last_change: now,
             last_seen: now,
         };

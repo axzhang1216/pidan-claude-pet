@@ -1,84 +1,92 @@
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 type State = "working" | "waiting" | "done" | "failed" | "idle";
 
 interface Session {
-    id: string;
-    project: string;
-    state: State;
-    title: string | null;
-    last_change: string;
-    agent: string;
+    id: string; project: string; state: State;
+    title: string | null; last_msg: string; last_change: string; agent: string;
 }
-
 interface StateChange {
     kind: "created" | "transitioned" | "removed";
-    id?: string;
-    from?: State;
-    to?: State;
+    id?: string; from?: State; to?: State; msg?: string;
 }
-
 interface Snapshot {
-    main_state: State;
-    sessions: Session[];
-    last_change?: StateChange;
+    main_state: State; sessions: Session[]; last_change?: StateChange;
 }
 
 const STATE_EMOJI: Record<State, string> = {
-    idle:    "😺",
-    working: "🐱💻",
-    waiting: "😾",
-    done:    "😸✨",
-    failed:  "🙀",
+    idle: "😺", working: "🐱💻", waiting: "😾", done: "😸✨", failed: "🙀",
 };
 
 const pet = document.getElementById("pet")!;
 const bubblesEl = document.getElementById("bubbles")!;
 let currentSnap: Snapshot = { main_state: "idle", sessions: [] };
 
-function render() {
-    pet.textContent = STATE_EMOJI[currentSnap.main_state];
-    pet.className = `pet ${currentSnap.main_state}`;
+// Track open bubbles — when all closed + no working sessions → idle
+let openBubbles = 0;
+
+function checkIdleFallback() {
+    if (openBubbles > 0) return;
+    const hasActive = currentSnap.sessions.some(s => s.state === "working");
+    if (!hasActive) {
+        pet.className = "pet idle";
+        pet.textContent = STATE_EMOJI["idle"];
+    }
 }
 
-// ---- bubbles ----
-const MAX_BUBBLES = 3;
+function render(snap: Snapshot) {
+    currentSnap = snap;
+    pet.textContent = STATE_EMOJI[snap.main_state];
+    pet.className = `pet ${snap.main_state}`;
+}
 
-function bubbleFor(change: StateChange, sessions: Session[]): string | null {
+function bubbleText(change: StateChange, sessions: Session[]): string | null {
     if (change.kind !== "transitioned") return null;
     const sess = sessions.find(s => s.id === change.id);
     const project = sess?.project ?? "?";
-    if (change.to === "waiting") return `📨 ${project} 在等你回复`;
-    if (change.to === "done" && change.from === "working") return `✅ ${project} 跑完啦`;
-    if (change.to === "failed") return `❌ ${project} 出错了`;
+    const msg = change.msg || sess?.last_msg || "";
+    const preview = msg ? `\n${msg}` : "";
+    if (change.to === "waiting") return `📨 ${project} 在等你回复${preview}`;
+    if (change.to === "done" && change.from === "working") return `✅ ${project} 跑完啦${preview}`;
+    if (change.to === "failed") return `❌ ${project} 出错了${preview}`;
     return null;
 }
 
 function showBubble(text: string) {
-    while (bubblesEl.children.length >= MAX_BUBBLES) {
-        bubblesEl.removeChild(bubblesEl.firstChild!);
-    }
     const div = document.createElement("div");
     div.className = "bubble";
-    div.textContent = text;
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "bubble-close";
+    closeBtn.textContent = "✕";
+    closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        div.remove();
+        openBubbles = Math.max(0, openBubbles - 1);
+        checkIdleFallback();
+    });
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "bubble-text";
+    textDiv.textContent = text;
+
+    div.appendChild(closeBtn);
+    div.appendChild(textDiv);
     bubblesEl.appendChild(div);
-    setTimeout(() => div.classList.add("fade"), 2700);
-    setTimeout(() => div.remove(), 3500);
+    openBubbles++;
 }
 
 listen<Snapshot>("pidan://snapshot", (e) => {
-    currentSnap = e.payload;
-    render();
+    render(e.payload);
     if (e.payload.last_change) {
-        const text = bubbleFor(e.payload.last_change, e.payload.sessions);
+        const text = bubbleText(e.payload.last_change, e.payload.sessions);
         if (text) showBubble(text);
     }
 });
 
 // right-click to open panel
-import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-
 pet.addEventListener("contextmenu", async (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -91,5 +99,4 @@ pet.addEventListener("contextmenu", async (ev) => {
     await panel.setFocus();
 });
 
-render();
-console.log("pidan frontend ready");
+render(currentSnap);

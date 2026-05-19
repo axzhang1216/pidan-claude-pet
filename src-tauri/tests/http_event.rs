@@ -21,6 +21,7 @@ async fn post_event_updates_state() {
         cwd: Some("D:/x/y/foo".into()),
         project: None,
         prompt: None,
+        msg: String::new(),
         raw: serde_json::Value::Null,
     };
     let resp = reqwest::Client::new()
