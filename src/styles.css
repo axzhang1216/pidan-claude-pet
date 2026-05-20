@@ -3,14 +3,14 @@ html, body {
   background: transparent;
   overflow: hidden;
   user-select: none;
-  width: 280px;
-  height: 432px;
+  /* pet area: 115px wide, centered in 170px window */
+  width: 170px;
+  height: 400px;
 }
 
-/* top 192px: pet canvas, draggable */
 #pet-area {
-  width: 280px;
-  height: 192px;
+  width: 170px;
+  height: 115px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,28 +19,30 @@ html, body {
 }
 
 #pet {
-  width: 192px;
-  height: 192px;
-  image-rendering: pixelated;
+  width: 115px;
+  height: 115px;
+  image-rendering: auto;
   -webkit-app-region: drag;
 }
 
-/* below pet: bubbles grow downward */
+/* bubbles below pet, growing downward */
 #bubbles {
   position: absolute;
-  top: 196px;
-  left: 4px;
-  right: 4px;
+  top: 119px;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 5px;
   pointer-events: none;
-  max-height: 230px;
+  max-height: 278px;
   overflow: hidden;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .bubble {
-  background: rgba(28, 28, 33, 0.92);
+  background: rgba(28, 28, 33, 0.93);
   color: #f0f0f0;
   border-radius: 10px;
   font: 11px/1.45 system-ui, sans-serif;
@@ -67,10 +69,13 @@ html, body {
 }
 .bubble-close:hover { color: #fff; }
 
-.bubble-text { white-space: pre-wrap; word-break: break-word; }
+.bubble-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 .bubble-label {
   font-size: 10px;
-  color: #888;
+  color: #8cf;
   margin-bottom: 2px;
 }
