@@ -10,6 +10,8 @@ pub struct HookEvent {
     #[serde(default)]
     pub msg: String,
     #[serde(default)]
+    pub notification_type: String,
+    #[serde(default)]
     pub raw: serde_json::Value,
 }
 

@@ -96,7 +96,7 @@ function checkIdleFallback() {
   if (!hasActive) setState("idle");
 }
 
-function showBubble(project: string, msg: string) {
+function showBubble(project: string, msg: string, kind: "done" | "waiting" | "failed" = "done") {
   const div = document.createElement("div");
   div.className = "bubble";
 
@@ -112,11 +112,13 @@ function showBubble(project: string, msg: string) {
 
   const label = document.createElement("div");
   label.className = "bubble-label";
-  label.textContent = `✅ ${project}`;
+  if (kind === "waiting") label.textContent = `👆 ${project} 需要你选择`;
+  else if (kind === "failed") label.textContent = `❌ ${project}`;
+  else label.textContent = `✅ ${project}`;
 
   const text = document.createElement("div");
   text.className = "bubble-text";
-  text.textContent = msg || "回复完毕";
+  text.textContent = msg || (kind === "waiting" ? "需要你操作" : "回复完毕");
 
   div.appendChild(close);
   div.appendChild(label);
@@ -132,12 +134,13 @@ listen<Snapshot>("pidan://snapshot", (e) => {
 
   const ch = e.payload.last_change;
   if (!ch || ch.kind !== "transitioned") return;
-  if (ch.to === "done" || ch.to === "failed") {
+  if (ch.to === "done" || ch.to === "failed" || ch.to === "waiting") {
     const sess = e.payload.sessions.find(s => s.id === ch.id);
     const project = sess?.project ?? "?";
     const msg = ch.msg || sess?.last_msg || "";
     const preview = msg.length > 200 ? msg.slice(0, 200) + "…" : msg;
-    showBubble(project, preview);
+    const kind = ch.to as "done" | "waiting" | "failed";
+    showBubble(project, preview, kind);
   }
 });
 

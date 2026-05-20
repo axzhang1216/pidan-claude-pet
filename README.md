@@ -1,59 +1,103 @@
-# 皮蛋 (Pidan) v0.1.0
+# 皮蛋 · Pidan — Claude Code Desktop Pet
 
-Windows 桌面悬浮桌宠，为 Claude Code 提供实时任务状态提醒。
+A Windows desktop pet that shows the real-time status of your Claude Code sessions. When you're running multiple Claude agents in parallel, Pidan sits in the corner of your screen and tells you what's happening at a glance.
 
-## 状态语义
+![Pidan demo](docs/screenshot.png)
 
-| 表情 | 状态 | 含义 |
-|------|------|------|
-| 😺 | idle | 闲置 |
-| 🐱💻 | working | 正在运行 |
-| 😾 | waiting | 等你回复（最高优先级，抖动+金光） |
-| 😸✨ | done | 跑完了 |
-| 🙀 | failed | 失败 |
+> **Open-source & API-key friendly.** Works with any Claude Code setup — official Anthropic accounts, self-hosted proxies, or third-party API providers. As long as Claude Code runs on your machine, Pidan works.
 
-皮蛋只显示最紧急会话的状态。右键皮蛋查看所有活跃会话列表。
+---
 
-## 快速开始
+## What it does
 
-### 1. 开发模式
+| Animation | State | Meaning |
+|-----------|-------|---------|
+| 😺 breathing | **idle** | No active sessions |
+| 🏃 running | **working** | Claude is thinking / executing |
+| 🙆 waving | **done** | Claude finished — bubble shows reply preview |
+| ⌛ waiting | **waiting** | Claude is waiting for your input |
+| 💀 failed | **failed** | Something went wrong |
+
+- Multiple sessions: Pidan shows the **highest-priority** state across all sessions
+- **Reply preview bubbles** appear below the pet when Claude finishes — click ✕ to dismiss
+- Right-click the pet → session list panel showing all active projects
+- Windows Toast notifications on completion (toggleable)
+- Window position is remembered across restarts
+
+---
+
+## Install (Windows)
+
+### Option A — One-click installer (recommended)
+
+1. Download `Pidan-Setup.exe` from [Releases](../../releases)
+2. Run the installer — it installs Pidan and **automatically patches your `~/.claude/settings.json`** to add the Claude Code hooks
+3. Launch Pidan from the Start menu or system tray
+
+> If you don't have `~/.claude/settings.json` yet, the installer creates it. If you do, it merges only the `hooks` section — your existing settings are preserved.
+
+### Option B — Manual setup
+
+1. Download and run the installer (without auto-patch), or build from source
+2. Copy the hook script:
+   ```powershell
+   New-Item -ItemType Directory -Force "$env:APPDATA\pidan\hooks"
+   Copy-Item "hooks\pidan-hook.ps1" "$env:APPDATA\pidan\hooks\"
+   ```
+3. Merge this into `~/.claude/settings.json`:
+   ```json
+   {
+     "hooks": {
+       "SessionStart":     [{"hooks":[{"type":"command","command":"powershell -NonInteractive -File \"%APPDATA%\pidan\hooks\pidan-hook.ps1\" SessionStart"}]}],
+       "Stop":             [{"hooks":[{"type":"command","command":"powershell -NonInteractive -File \"%APPDATA%\pidan\hooks\pidan-hook.ps1\" Stop"}]}],
+       "Notification":     [{"hooks":[{"type":"command","command":"powershell -NonInteractive -File \"%APPDATA%\pidan\hooks\pidan-hook.ps1\" Notification"}]}],
+       "UserPromptSubmit": [{"hooks":[{"type":"command","command":"powershell -NonInteractive -File \"%APPDATA%\pidan\hooks\pidan-hook.ps1\" UserPromptSubmit"}]}],
+       "SessionEnd":       [{"hooks":[{"type":"command","command":"powershell -NonInteractive -File \"%APPDATA%\pidan\hooks\pidan-hook.ps1\" SessionEnd"}]}]
+     }
+   }
+   ```
+
+---
+
+## Build from source
+
+**Prerequisites:** Rust (stable, `CARGO_HOME` and `RUSTUP_HOME` can be on any drive), Node.js ≥ 18, WebView2 (pre-installed on Windows 10/11).
 
 ```bash
-cd D:/vib-coding-pet
+git clone https://github.com/axzhang1216/pidan-claude-pet
+cd pidan-claude-pet
 npm install
-npm run tauri dev
+npm run tauri dev        # development mode
+npm run tauri build      # produces installer in src-tauri/target/release/bundle/nsis/
 ```
 
-首次编译约需 3-5 分钟（需要 CARGO_HOME=D:\.cargo RUSTUP_HOME=D:\.rustup）。
+---
 
-### 2. 接入 Claude Code
+## Architecture
 
-```bash
-mkdir -p "$APPDATA/pidan/hooks"
-cp hooks/pidan-hook.sh "$APPDATA/pidan/hooks/"
+```
+Claude Code hooks
+    └─▶ pidan-hook.ps1 (or .sh)
+            └─▶ POST http://127.0.0.1:<port>/event   (port written to %APPDATA%\pidan\port)
+                    └─▶ Rust (axum) HTTP server
+                            └─▶ AppState state machine
+                                    └─▶ Tauri event: pidan://snapshot
+                                            └─▶ Frontend (Vanilla TS + Canvas)
+                                                    ├─▶ Spritesheet animation
+                                                    ├─▶ Reply preview bubbles
+                                                    └─▶ Windows Toast
 ```
 
-然后把 hooks/README.md 中的 JSON 合并到 ~/.claude/settings.json。
+The hook script is fail-safe: if Pidan isn't running, it exits silently with code 0 and never blocks Claude Code.
 
-### 3. 构建安装包
+---
 
-```bash
-npm run tauri build
-# 输出: src-tauri/target/release/bundle/nsis/Pidan_0.1.0_x64-setup.exe
-```
+## For non-Anthropic Claude Code users
 
-## 手动 E2E 验收
+Pidan works with any Claude Code installation regardless of how you authenticate. The hooks fire on Claude Code events — not on Anthropic API calls. If your Claude Code runs against a proxy or third-party endpoint, the pet still works.
 
-启动 tauri dev 后，另一个终端：
+---
 
-```bash
-python tests/e2e/test_v1.py
-```
+## License
 
-## 架构
-
-Claude Code Hook -> pidan-hook.sh -> POST /event (axum 127.0.0.1:19514)
-                                          -> AppState 状态机
-                                          -> Tauri event: pidan://snapshot
-                                          -> 前端 emoji 渲染 + 气泡
-                                          -> Windows Toast
+MIT

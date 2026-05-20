@@ -22,6 +22,7 @@ async fn post_event_updates_state() {
         project: None,
         prompt: None,
         msg: String::new(),
+        notification_type: String::new(),
         raw: serde_json::Value::Null,
     };
     let resp = reqwest::Client::new()

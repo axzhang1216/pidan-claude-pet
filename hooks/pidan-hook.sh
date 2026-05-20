@@ -13,15 +13,16 @@ node -e "
 const event = process.argv[1];
 const port  = process.argv[2];
 const raw   = process.argv[3];
-let sid = 'unknown', cwd = '', msg = '';
+let sid = 'unknown', cwd = '', msg = '', notifType = '';
 try {
   const d = JSON.parse(raw);
   sid = d.session_id || sid;
   cwd = d.cwd || '';
+  notifType = d.notification_type || '';
   const full = d.last_assistant_message || d.message || d.prompt || '';
   msg = full.length > 120 ? full.slice(0, 120) + '…' : full;
 } catch(e) {}
-const payload = JSON.stringify({ event_type: event, session_id: sid, cwd: cwd, msg: msg });
+const payload = JSON.stringify({ event_type: event, session_id: sid, cwd: cwd, msg: msg, notification_type: notifType });
 const http = require('http');
 const req = http.request({
   host: '127.0.0.1', port: parseInt(port), path: '/event', method: 'POST',

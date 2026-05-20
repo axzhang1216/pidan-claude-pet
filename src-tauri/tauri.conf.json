@@ -66,11 +66,17 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "../hooks/pidan-hook.ps1": "hooks/pidan-hook.ps1",
+      "../hooks/pidan-hook.sh": "hooks/pidan-hook.sh",
+      "../installer/patch-claude-settings.ps1": "installer/patch-claude-settings.ps1"
+    },
     "windows": {
       "nsis": {
         "installMode": "currentUser",
         "languages": ["SimpChinese", "English"],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerHooks": "../installer/pidan-hooks.nsh"
       }
     }
   }

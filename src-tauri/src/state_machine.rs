@@ -51,7 +51,14 @@ impl AppState {
             }
             HookEventType::UserPromptSubmit => self.transition(&id, State::Working, now, evt.prompt, evt.msg),
             HookEventType::Stop => self.transition(&id, State::Done, now, None, evt.msg),
-            HookEventType::Notification => self.transition(&id, State::Waiting, now, None, evt.msg),
+            HookEventType::Notification => {
+                // idle_prompt = CC finished and waiting for next task → ignore
+                // permission_prompt / elicitation_dialog / etc. = needs user action → waiting
+                if evt.notification_type == "idle_prompt" {
+                    return vec![];
+                }
+                self.transition(&id, State::Waiting, now, None, evt.msg)
+            }
             HookEventType::SessionEnd => {
                 if self.sessions.remove(&id).is_some() {
                     vec![StateChange::Removed(id)]
@@ -118,6 +125,7 @@ mod tests {
             project: None,
             prompt: None,
             msg: String::new(),
+            notification_type: String::new(),
             raw: serde_json::Value::Null,
         }
     }
@@ -182,5 +190,16 @@ mod tests {
         let changes = s.ingest_hook(evt(HookEventType::Notification, "ghost"));
         assert_eq!(changes.len(), 1);
         assert_eq!(s.sessions.values().next().unwrap().state, State::Waiting);
+    }
+
+    #[test]
+    fn idle_prompt_notification_ignored() {
+        let mut s = AppState::new();
+        s.ingest_hook(evt(HookEventType::SessionStart, "a"));
+        let mut idle_evt = evt(HookEventType::Notification, "a");
+        idle_evt.notification_type = "idle_prompt".into();
+        let changes = s.ingest_hook(idle_evt);
+        assert!(changes.is_empty(), "idle_prompt should not change state");
+        assert_eq!(s.sessions.values().next().unwrap().state, State::Working);
     }
 }
