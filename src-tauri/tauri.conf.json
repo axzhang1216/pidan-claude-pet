@@ -15,8 +15,8 @@
       {
         "label": "pet",
         "title": "皮蛋",
-        "width": 192,
-        "height": 192,
+        "width": 280,
+        "height": 432,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,

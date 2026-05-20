@@ -1,66 +1,76 @@
 html, body {
-  margin: 0; padding: 0; background: transparent; overflow: hidden;
-  user-select: none; width: 100vw; height: 100vh;
+  margin: 0; padding: 0;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  width: 280px;
+  height: 432px;
 }
 
-.pet {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 96px; cursor: grab;
+/* top 192px: pet canvas, draggable */
+#pet-area {
+  width: 280px;
+  height: 192px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   -webkit-app-region: drag;
-  transition: filter 0.3s ease;
+  cursor: grab;
 }
 
-.pet.idle    { animation: breathe 4s ease-in-out infinite; }
-.pet.working { animation: sway 1.6s ease-in-out infinite; }
-.pet.waiting { animation: shake 0.6s ease-in-out infinite; filter: drop-shadow(0 0 8px gold); }
-.pet.done    { animation: jump 0.5s ease-out 1; }
-.pet.failed  { filter: drop-shadow(0 0 8px red); }
+#pet {
+  width: 192px;
+  height: 192px;
+  image-rendering: pixelated;
+  -webkit-app-region: drag;
+}
 
-@keyframes breathe { 0%,100% { transform: scale(1.0); } 50% { transform: scale(1.03); } }
-@keyframes sway    { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
-@keyframes shake   { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
-@keyframes jump    { 0% { transform: scale(1.0); } 30% { transform: scale(1.2); } 100% { transform: scale(1.0); } }
-
-/* bubbles — persistent, manual close */
+/* below pet: bubbles grow downward */
 #bubbles {
   position: absolute;
-  top: 4px; right: 4px;
-  display: flex; flex-direction: column; gap: 6px;
+  top: 196px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   pointer-events: none;
-  width: 180px;
-  max-height: calc(100vh - 8px);
+  max-height: 230px;
   overflow: hidden;
 }
 
 .bubble {
-  background: rgba(30, 30, 35, 0.93);
+  background: rgba(28, 28, 33, 0.92);
   color: #f0f0f0;
   border-radius: 10px;
-  font: 11px/1.4 system-ui, sans-serif;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  font: 11px/1.45 system-ui, sans-serif;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
   pointer-events: all;
   position: relative;
-  padding: 6px 24px 6px 8px;
+  padding: 7px 26px 7px 9px;
   animation: popIn 0.15s ease-out;
+  -webkit-app-region: no-drag;
 }
 
 @keyframes popIn {
-  from { transform: scale(0.85); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 .bubble-close {
   position: absolute;
-  top: 4px; right: 5px;
+  top: 5px; right: 6px;
   background: none; border: none;
-  color: #888; font-size: 11px;
+  color: #666; font-size: 11px;
   cursor: pointer; padding: 0; line-height: 1;
   -webkit-app-region: no-drag;
 }
 .bubble-close:hover { color: #fff; }
 
-.bubble-text {
-  white-space: pre-wrap;
-  word-break: break-word;
+.bubble-text { white-space: pre-wrap; word-break: break-word; }
+
+.bubble-label {
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 2px;
 }

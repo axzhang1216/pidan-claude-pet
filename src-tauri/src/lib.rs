@@ -79,7 +79,6 @@ pub fn run() {
                             let cfg = config::load();
                             if cfg.toast_enabled {
                                 let maybe_msg: Option<(&str, String)> = match to {
-                                    State::Waiting => Some(("皮蛋", format!("📨 {} 在等你回复", proj))),
                                     State::Done    => Some(("皮蛋", format!("✅ {} 跑完啦", proj))),
                                     State::Failed  => Some(("皮蛋", format!("❌ {} 出错了", proj))),
                                     _ => None,
@@ -120,8 +119,8 @@ pub fn run() {
                     let sz = monitor.size();
                     let pos = monitor.position();
                     let _ = pet.set_position(tauri::PhysicalPosition {
-                        x: pos.x + sz.width as i32 - 192 - 24,
-                        y: pos.y + sz.height as i32 - 192 - 80,
+                        x: pos.x + sz.width as i32 - 280 - 16,
+                        y: pos.y + sz.height as i32 - 432 - 60,
                     });
                 }
             }
@@ -184,8 +183,8 @@ fn reset_window_pos(app: tauri::AppHandle) -> Result<(), String> {
             let sz = monitor.size();
             let pos = monitor.position();
             let _ = w.set_position(tauri::PhysicalPosition {
-                x: pos.x + sz.width as i32 - 192 - 24,
-                y: pos.y + sz.height as i32 - 192 - 80,
+                x: pos.x + sz.width as i32 - 280 - 16,
+                y: pos.y + sz.height as i32 - 432 - 60,
             });
         }
     }
