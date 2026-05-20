@@ -40,12 +40,20 @@ pub fn run() {
             reset_window_pos
         ])
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Moved(pos) = event {
-                if window.label() == "pet" {
-                    let mut cfg = config::load();
-                    cfg.window_pos = Some((pos.x, pos.y));
-                    let _ = config::save(&cfg);
+            match event {
+                tauri::WindowEvent::Moved(pos) => {
+                    if window.label() == "pet" {
+                        let mut cfg = config::load();
+                        cfg.window_pos = Some((pos.x, pos.y));
+                        let _ = config::save(&cfg);
+                    }
                 }
+                tauri::WindowEvent::Destroyed => {
+                    if window.label() == "pet" {
+                        let _ = std::fs::remove_file(paths::port_path());
+                    }
+                }
+                _ => {}
             }
         })
         .setup(move |app| {

@@ -2,8 +2,28 @@
 set +e
 EVENT="${1:-}"
 PORT_FILE="${APPDATA:-$HOME/.config}/pidan/port"
-if [ ! -f "$PORT_FILE" ]; then exit 0; fi
-PORT="$(cat "$PORT_FILE" 2>/dev/null)"
+
+# Read port from file, then verify it's alive; if not, scan range
+PORT=""
+if [ -f "$PORT_FILE" ]; then
+    PORT="$(cat "$PORT_FILE" 2>/dev/null)"
+fi
+
+# Verify port is alive; if not, scan and self-heal port file
+if [ -n "$PORT" ]; then
+    curl -s -m 0.5 "http://127.0.0.1:$PORT/health" >/dev/null 2>&1 || PORT=""
+fi
+
+if [ -z "$PORT" ]; then
+    for p in $(seq 19514 19523); do
+        if curl -s -m 0.3 "http://127.0.0.1:$p/health" >/dev/null 2>&1; then
+            PORT="$p"
+            echo -n "$p" > "$PORT_FILE" 2>/dev/null
+            break
+        fi
+    done
+fi
+
 if [ -z "$PORT" ]; then exit 0; fi
 
 STDIN_JSON=""

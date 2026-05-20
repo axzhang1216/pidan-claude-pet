@@ -4,8 +4,29 @@
 param([string]$EventType = "")
 
 $portFile = Join-Path $env:APPDATA "pidan\port"
-if (-not (Test-Path $portFile)) { exit 0 }
-$port = (Get-Content $portFile -Raw).Trim()
+$port = ""
+if (Test-Path $portFile) { $port = (Get-Content $portFile -Raw).Trim() }
+
+# Verify port alive; if not, scan range and self-heal
+function Test-Port($p) {
+    try {
+        $r = Invoke-WebRequest -Uri "http://127.0.0.1:$p/health" -TimeoutSec 1 -UseBasicParsing -ErrorAction Stop
+        return $r.Content -eq "ok"
+    } catch { return $false }
+}
+
+if ($port -and -not (Test-Port $port)) { $port = "" }
+
+if (-not $port) {
+    foreach ($p in 19514..19523) {
+        if (Test-Port $p) {
+            $port = "$p"
+            [System.IO.File]::WriteAllText($portFile, $port)
+            break
+        }
+    }
+}
+
 if (-not $port) { exit 0 }
 
 # Read stdin JSON (Claude Code pipes hook payload via stdin)

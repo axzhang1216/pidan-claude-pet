@@ -14,7 +14,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  -webkit-app-region: drag;
+  
   cursor: grab;
 }
 
@@ -22,7 +22,7 @@ html, body {
   width: 115px;
   height: 115px;
   image-rendering: auto;
-  -webkit-app-region: drag;
+  
 }
 
 /* bubbles below pet, growing downward */
