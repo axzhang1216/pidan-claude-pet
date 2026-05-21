@@ -1,4 +1,4 @@
-# pidan-hook.ps1 — Claude Code Hook bridge for Pidan desktop pet
+﻿# pidan-hook.ps1 - Claude Code hook bridge for the Pidan desktop pet
 # Usage: powershell -NonInteractive -File pidan-hook.ps1 <EventType>
 # EventType: SessionStart | UserPromptSubmit | Notification | Stop | SessionEnd
 param([string]$EventType = "")
@@ -8,7 +8,7 @@ if (-not (Test-Path $portFile)) { exit 0 }
 $port = (Get-Content $portFile -Raw).Trim()
 if (-not $port) { exit 0 }
 
-# Read stdin JSON (Claude Code pipes hook payload via stdin)
+# Read stdin JSON. Claude Code pipes the hook payload through stdin.
 $stdinJson = ""
 if (-not [Console]::IsInputRedirected -eq $false) {
     try { $stdinJson = $input | Out-String } catch {}
@@ -34,7 +34,7 @@ if ($stdinJson) {
                elseif ($d.message) { $d.message }
                elseif ($d.prompt)  { $d.prompt }
                else { "" }
-        if ($raw.Length -gt 120) { $msg = $raw.Substring(0, 120) + "…" }
+        if ($raw.Length -gt 120) { $msg = $raw.Substring(0, 120) + "..." }
         else { $msg = $raw }
     } catch {}
 }
@@ -60,7 +60,8 @@ try {
     $resp = $req.GetResponse()
     $resp.Close()
 } catch {
-    # Pidan not running — silent fail
+    # Pidan is not running; fail silently.
 }
 
 exit 0
+

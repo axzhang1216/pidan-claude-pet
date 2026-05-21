@@ -1,10 +1,10 @@
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import bruceSheet from "./assets/pets/bruce/spritesheet.webp";
 
 // Spritesheet: 8 cols x 9 rows, cell 192x208px
 // Row -> actual frame count (measured from alpha channel)
-const SHEET_COLS = 8;
 const CELL_W = 192;
 const CELL_H = 208;
 const ROW_FRAMES = [6, 8, 8, 4, 5, 8, 6, 6, 6]; // rows 0-8
@@ -45,7 +45,7 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
 const sheet = new Image();
-sheet.src = "/src/assets/pets/bruce/spritesheet.webp";
+sheet.src = bruceSheet;
 
 let currentRow = ROW.idle;
 let frame = 0;
