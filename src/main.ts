@@ -1,6 +1,9 @@
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import bruceSheetUrl from "./assets/pets/bruce/spritesheet.webp";
+import pidanSheetUrl from "./assets/pets/pidan/spritesheet.webp";
 
 // Spritesheet: 8 cols x 9 rows, cell 192x208px
 // Row -> actual frame count (measured from alpha channel)
@@ -45,13 +48,22 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
 const sheet = new Image();
-sheet.src = "/src/assets/pets/pidan/spritesheet.webp";
+const skinSheets = {
+  pidan: pidanSheetUrl,
+  bruce: bruceSheetUrl,
+} as const;
+
+function loadSkin(skin: string) {
+  const name = skin in skinSheets ? (skin as keyof typeof skinSheets) : "pidan";
+  sheet.src = skinSheets[name];
+}
 
 let currentRow = ROW.idle;
 let frame = 0;
 const FPS = 10;
 const FRAME_MS = 1000 / FPS;
 let lastFrameTime = 0;
+let animStarted = false;
 
 function drawFrame() {
   ctx.clearRect(0, 0, DISPLAY_SIZE, DISPLAY_SIZE);
@@ -69,7 +81,13 @@ function animate(ts: number) {
   drawFrame();
 }
 
-sheet.onload = () => { drawFrame(); requestAnimationFrame(animate); };
+sheet.onload = () => {
+  drawFrame();
+  if (!animStarted) {
+    animStarted = true;
+    requestAnimationFrame(animate);
+  }
+};
 
 // current app state — drag overrides visually but doesn't change this
 let appStateRow = ROW.idle;
@@ -92,7 +110,6 @@ function setState(s: State) {
 // --- Drag with directional animation ---
 const win = getCurrentWindow();
 
-let dragStartX = 0;
 let dragLastX = 0;
 let dragDirTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -101,7 +118,7 @@ let dragDirTimer: ReturnType<typeof setTimeout> | null = null;
 const petArea = document.getElementById("pet-area")!;
 (petArea.style as any).webkitAppRegion = "no-drag";
 
-canvas.addEventListener("mousedown", async (ev) => {
+canvas.addEventListener("pointerdown", async (ev) => {
   if (ev.button !== 0) return;
   isDragging = true;
   dragLastX = ev.screenX;
@@ -135,6 +152,14 @@ canvas.addEventListener("pointerup", () => {
   isDragging = false;
   if (dragDirTimer) { clearTimeout(dragDirTimer); dragDirTimer = null; }
   setRow(appStateRow);
+});
+
+// Load initial skin from config
+invoke<{ skin: string }>("get_config").then(c => loadSkin(c.skin)).catch(() => loadSkin("pidan"));
+
+// Live skin switch without restart
+listen<{ skin: string }>("pidan://skin-change", (e) => {
+  loadSkin(e.payload.skin);
 });
 
 // --- Bubbles ---
