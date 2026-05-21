@@ -1,31 +1,38 @@
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 
 interface ConfigDto {
     toast_enabled: boolean;
     sound_enabled: boolean;
     autostart: boolean;
+    skin: string;
 }
 
-const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+const $cb = (id: string) => document.getElementById(id) as HTMLInputElement;
+const $sel = (id: string) => document.getElementById(id) as HTMLSelectElement;
 
 async function load() {
     const c = await invoke<ConfigDto>("get_config");
-    $("toast").checked = c.toast_enabled;
-    $("sound").checked = c.sound_enabled;
-    $("autostart").checked = c.autostart;
+    $cb("toast").checked = c.toast_enabled;
+    $cb("sound").checked = c.sound_enabled;
+    $cb("autostart").checked = c.autostart;
+    $sel("skin").value = c.skin;
 }
 
-$("save").addEventListener("click", async () => {
+$cb("save").addEventListener("click", async () => {
+    const skin = $sel("skin").value;
     await invoke("set_config", { dto: {
-        toast_enabled: $("toast").checked,
-        sound_enabled: $("sound").checked,
-        autostart: $("autostart").checked,
+        toast_enabled: $cb("toast").checked,
+        sound_enabled: $cb("sound").checked,
+        autostart: $cb("autostart").checked,
+        skin,
     }});
-    const btn = $("save") as unknown as HTMLButtonElement;
+    await emit("pidan://skin-change", { skin });
+    const btn = document.getElementById("save") as HTMLButtonElement;
     btn.textContent = "已保存 ✓";
     setTimeout(() => { btn.textContent = "保存"; }, 1500);
 });
 
-$("reset-pos").addEventListener("click", () => invoke("reset_window_pos"));
+$cb("reset-pos").addEventListener("click", () => invoke("reset_window_pos"));
 
 load();

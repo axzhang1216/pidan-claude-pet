@@ -156,12 +156,13 @@ struct ConfigDto {
     toast_enabled: bool,
     sound_enabled: bool,
     autostart: bool,
+    skin: String,
 }
 
 #[tauri::command]
 fn get_config() -> ConfigDto {
     let c = config::load();
-    ConfigDto { toast_enabled: c.toast_enabled, sound_enabled: c.sound_enabled, autostart: c.autostart }
+    ConfigDto { toast_enabled: c.toast_enabled, sound_enabled: c.sound_enabled, autostart: c.autostart, skin: c.skin }
 }
 
 #[tauri::command]
@@ -170,6 +171,9 @@ fn set_config(dto: ConfigDto) -> Result<(), String> {
     c.toast_enabled = dto.toast_enabled;
     c.sound_enabled = dto.sound_enabled;
     c.autostart = dto.autostart;
+    if dto.skin == "pidan" || dto.skin == "bruce" {
+        c.skin = dto.skin;
+    }
     config::save(&c).map_err(|e| e.to_string())
 }
 
