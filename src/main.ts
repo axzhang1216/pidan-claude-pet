@@ -45,7 +45,7 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
 const sheet = new Image();
-sheet.src = "/src/assets/pets/pidan/spritesheet.webp";
+sheet.src = "/src/assets/pets/bruce/spritesheet.webp";
 
 let currentRow = ROW.idle;
 let frame = 0;
