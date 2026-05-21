@@ -1,7 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import bruceSheet from "./assets/pets/bruce/spritesheet.webp";
 
 // Spritesheet: 8 cols x 9 rows, cell 192x208px
 // Row -> actual frame count (measured from alpha channel)
@@ -45,13 +45,19 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
 const sheet = new Image();
-sheet.src = bruceSheet;
+
+function loadSkin(skin: string) {
+  const validSkins = ["pidan", "bruce"];
+  const name = validSkins.includes(skin) ? skin : "pidan";
+  sheet.src = `/src/assets/pets/${name}/spritesheet.webp`;
+}
 
 let currentRow = ROW.idle;
 let frame = 0;
 const FPS = 8;
 const FRAME_MS = 1000 / FPS;
 let lastFrameTime = 0;
+let animStarted = false;
 
 function drawFrame() {
   ctx.clearRect(0, 0, DISPLAY_SIZE, DISPLAY_SIZE);
@@ -72,7 +78,10 @@ function animate(ts: number) {
 
 sheet.onload = () => {
   drawFrame();
-  requestAnimationFrame(animate);
+  if (!animStarted) {
+    animStarted = true;
+    requestAnimationFrame(animate);
+  }
 };
 
 function setState(s: State) {
@@ -84,6 +93,14 @@ function setState(s: State) {
     drawFrame();
   }
 }
+
+// Load initial skin from config
+invoke<{ skin: string }>("get_config").then(c => loadSkin(c.skin)).catch(() => loadSkin("pidan"));
+
+// Live skin switch without restart
+listen<{ skin: string }>("pidan://skin-change", (e) => {
+  loadSkin(e.payload.skin);
+});
 
 // --- Bubbles ---
 const bubblesEl = document.getElementById("bubbles")!;

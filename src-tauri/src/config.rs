@@ -19,15 +19,22 @@ impl Default for Config {
             toast_enabled: true,
             sound_enabled: false,
             autostart: false,
-            skin: "emoji".into(),
+            skin: "pidan".into(),
         }
     }
+}
+
+fn normalize(mut c: Config) -> Config {
+    if c.skin != "pidan" && c.skin != "bruce" {
+        c.skin = "pidan".into();
+    }
+    c
 }
 
 pub fn load() -> Config {
     match std::fs::read_to_string(config_path()) {
         Ok(s) => match toml::from_str::<Config>(&s) {
-            Ok(c) => c,
+            Ok(c) => normalize(c),
             Err(e) => {
                 let bak = config_path().with_extension(
                     format!("toml.bak.{}", chrono::Utc::now().timestamp())
