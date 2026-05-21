@@ -2,6 +2,8 @@ import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import bruceSheetUrl from "./assets/pets/bruce/spritesheet.webp";
+import pidanSheetUrl from "./assets/pets/pidan/spritesheet.webp";
 
 // Spritesheet: 8 cols x 9 rows, cell 192x208px
 // Row -> actual frame count (measured from alpha channel)
@@ -45,11 +47,14 @@ ctx.imageSmoothingEnabled = true;
 ctx.imageSmoothingQuality = "high";
 
 const sheet = new Image();
+const skinSheets = {
+  pidan: pidanSheetUrl,
+  bruce: bruceSheetUrl,
+} as const;
 
 function loadSkin(skin: string) {
-  const validSkins = ["pidan", "bruce"];
-  const name = validSkins.includes(skin) ? skin : "pidan";
-  sheet.src = `/src/assets/pets/${name}/spritesheet.webp`;
+  const name = skin in skinSheets ? (skin as keyof typeof skinSheets) : "pidan";
+  sheet.src = skinSheets[name];
 }
 
 let currentRow = ROW.idle;
