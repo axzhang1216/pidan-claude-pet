@@ -3,6 +3,7 @@ use pidan::updater::{compare_versions, select_installer_asset_url};
 #[test]
 fn release_version_must_be_newer_than_current() {
     assert!(compare_versions("v0.2.0", "0.1.0"));
+    assert!(compare_versions("v0.1.1-skin-switch", "0.1.0"));
     assert!(!compare_versions("v0.1.0", "0.1.0"));
     assert!(!compare_versions("v0.1", "0.1.0"));
     assert!(!compare_versions("v0.0.9", "0.1.0"));

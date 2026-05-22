@@ -120,6 +120,12 @@ fn parse_version(version: &str) -> Vec<u32> {
         .trim()
         .trim_start_matches('v')
         .split('.')
-        .map(|part| part.parse::<u32>().unwrap_or(0))
+        .map(|part| {
+            part.chars()
+                .take_while(|ch| ch.is_ascii_digit())
+                .collect::<String>()
+                .parse::<u32>()
+                .unwrap_or(0)
+        })
         .collect()
 }
