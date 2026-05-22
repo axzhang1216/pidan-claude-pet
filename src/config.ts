@@ -8,7 +8,13 @@ interface ConfigDto {
     skin: string;
 }
 
-const $cb = (id: string) => document.getElementById(id) as HTMLInputElement;
+interface UpdateResult {
+    status: "up_to_date" | "update_available";
+    version?: string;
+}
+
+const $el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const $cb = (id: string) => $el<HTMLInputElement>(id);
 const $sel = (id: string) => document.getElementById(id) as HTMLSelectElement;
 
 async function load() {
@@ -28,11 +34,40 @@ $cb("save").addEventListener("click", async () => {
         skin,
     }});
     await emit("pidan://skin-change", { skin });
-    const btn = document.getElementById("save") as HTMLButtonElement;
+    const btn = $el<HTMLButtonElement>("save");
     btn.textContent = "已保存 ✓";
     setTimeout(() => { btn.textContent = "保存"; }, 1500);
 });
 
 $cb("reset-pos").addEventListener("click", () => invoke("reset_window_pos"));
+
+$el<HTMLButtonElement>("check-update").addEventListener("click", async () => {
+    const btn = $el<HTMLButtonElement>("check-update");
+    const originalText = "检查更新";
+
+    btn.disabled = true;
+    btn.textContent = "检查中…";
+
+    try {
+        const result = await invoke<UpdateResult>("check_update");
+        if (result.status === "up_to_date") {
+            btn.textContent = "已是最新版 ✓";
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 1500);
+            return;
+        }
+
+        btn.textContent = `发现新版本 ${result.version ?? ""}，安装中…`;
+    } catch (error) {
+        btn.textContent = "检查失败，请重试";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }, 2000);
+        console.error("check_update failed", error);
+    }
+});
 
 load();

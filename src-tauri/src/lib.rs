@@ -7,6 +7,7 @@ pub mod http_server;
 pub mod config;
 pub mod log;
 pub mod tray;
+pub mod updater;
 
 use http_server::{HttpDeps, SharedState};
 use state_machine::AppState;
@@ -37,7 +38,8 @@ pub fn run() {
             get_snapshot,
             get_config,
             set_config,
-            reset_window_pos
+            reset_window_pos,
+            check_update
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Moved(pos) = event {
@@ -193,4 +195,9 @@ fn reset_window_pos(app: tauri::AppHandle) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<updater::UpdateResult, String> {
+    updater::check_for_update(app).await.map_err(|e| e.to_string())
 }
