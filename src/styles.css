@@ -1,5 +1,6 @@
 html, body {
-  margin: 0; padding: 0;
+  margin: 0;
+  padding: 0;
   background: transparent;
   overflow: hidden;
   user-select: none;
@@ -44,9 +45,10 @@ html, body {
 .bubble {
   background: rgba(28, 28, 33, 0.93);
   color: #f0f0f0;
+  border: 1px solid transparent;
   border-radius: 10px;
   font: 11px/1.45 system-ui, sans-serif;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
   pointer-events: all;
   position: relative;
   padding: 7px 26px 7px 9px;
@@ -54,20 +56,50 @@ html, body {
   -webkit-app-region: no-drag;
 }
 
+.bubble--result {
+  background: #fff9c4;
+  border-color: #f9a825;
+  color: #3d3200;
+}
+
+.bubble--waiting {
+  background: #fce4ec;
+  border-color: #f48fb1;
+  color: #4f2334;
+}
+
 @keyframes popIn {
   from { transform: translateY(-6px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bubble-dismiss {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-8px) scale(0.95); }
+}
+
+.bubble--dismissing {
+  animation: bubble-dismiss 200ms ease forwards;
+  pointer-events: none;
 }
 
 .bubble-close {
   position: absolute;
-  top: 5px; right: 6px;
-  background: none; border: none;
-  color: #666; font-size: 11px;
-  cursor: pointer; padding: 0; line-height: 1;
+  top: 5px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
   -webkit-app-region: no-drag;
 }
-.bubble-close:hover { color: #fff; }
+
+.bubble-close:hover {
+  color: #111;
+}
 
 .bubble-text {
   white-space: pre-wrap;
@@ -78,4 +110,12 @@ html, body {
   font-size: 10px;
   color: #8cf;
   margin-bottom: 2px;
+}
+
+.bubble--result .bubble-label {
+  color: #8d6e00;
+}
+
+.bubble--waiting .bubble-label {
+  color: #ad1457;
 }
