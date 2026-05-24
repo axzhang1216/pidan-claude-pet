@@ -15,33 +15,44 @@ const ROW_FRAMES = [6, 8, 8, 4, 5, 8, 6, 6, 6]; // rows 0-8
 // 0:idle  1:running-right  2:running-left  3:waving
 // 4:jumping  5:failed  6:waiting  7:running  8:review
 const ROW: Record<string, number> = {
-  idle:          0,
-  working:       7,
-  waiting:       6,
-  done:          3,
-  failed:        5,
-  drag_right:    1,
-  drag_left:     2,
+  idle: 0,
+  working: 7,
+  waiting: 6,
+  done: 3,
+  failed: 5,
+  drag_right: 1,
+  drag_left: 2,
 };
 
 type State = "working" | "waiting" | "done" | "failed" | "idle";
 
 interface Session {
-  id: string; project: string; state: State;
-  title: string | null; last_msg: string; last_change: string;
+  id: string;
+  project: string;
+  state: State;
+  title: string | null;
+  last_msg: string;
+  last_change: string;
 }
+
 interface StateChange {
   kind: "created" | "transitioned" | "removed";
-  id?: string; from?: State; to?: State; msg?: string;
+  id?: string;
+  from?: State;
+  to?: State;
+  msg?: string;
 }
+
 interface Snapshot {
-  main_state: State; sessions: Session[]; last_change?: StateChange;
+  main_state: State;
+  sessions: Session[];
+  last_change?: StateChange;
 }
 
 // --- Canvas sprite player ---
 const DISPLAY_SIZE = 115;
 const canvas = document.getElementById("pet") as HTMLCanvasElement;
-canvas.width  = DISPLAY_SIZE;
+canvas.width = DISPLAY_SIZE;
 canvas.height = DISPLAY_SIZE;
 const ctx = canvas.getContext("2d")!;
 ctx.imageSmoothingEnabled = true;
@@ -155,7 +166,9 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // Load initial skin from config
-invoke<{ skin: string }>("get_config").then(c => loadSkin(c.skin)).catch(() => loadSkin("pidan"));
+invoke<{ skin: string }>("get_config")
+  .then((c) => loadSkin(c.skin))
+  .catch(() => loadSkin("pidan"));
 
 // Live skin switch without restart
 listen<{ skin: string }>("pidan://skin-change", (e) => {
@@ -169,22 +182,45 @@ let currentSnap: Snapshot = { main_state: "idle", sessions: [] };
 
 function checkIdleFallback() {
   if (openBubbles > 0) return;
-  const hasActive = currentSnap.sessions.some(s => s.state === "working");
+  const hasActive = currentSnap.sessions.some((s) => s.state === "working");
   if (!hasActive) setState("idle");
 }
 
 function showBubble(project: string, msg: string, kind: "done" | "waiting" | "failed" = "done") {
   const div = document.createElement("div");
   div.className = "bubble";
+  if (kind === "waiting") div.classList.add("bubble--waiting");
+  else div.classList.add("bubble--result");
+
+  let dismissing = false;
+  const dismissBubble = () => {
+    if (dismissing) return;
+    dismissing = true;
+    div.classList.add("bubble--dismissing");
+    div.addEventListener(
+      "animationend",
+      () => {
+        div.remove();
+        openBubbles = Math.max(0, openBubbles - 1);
+        checkIdleFallback();
+      },
+      { once: true },
+    );
+  };
 
   const close = document.createElement("button");
   close.className = "bubble-close";
+  close.type = "button";
   close.textContent = "✕";
   close.addEventListener("click", (e) => {
     e.stopPropagation();
-    div.remove();
-    openBubbles = Math.max(0, openBubbles - 1);
-    checkIdleFallback();
+    dismissBubble();
+  });
+
+  div.addEventListener("contextmenu", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    dismissBubble();
   });
 
   const label = document.createElement("div");
@@ -212,15 +248,16 @@ listen<Snapshot>("pidan://snapshot", (e) => {
   const ch = e.payload.last_change;
   if (!ch || ch.kind !== "transitioned") return;
   if (ch.to === "done" || ch.to === "failed" || ch.to === "waiting") {
-    const sess = e.payload.sessions.find(s => s.id === ch.id);
+    const sess = e.payload.sessions.find((s) => s.id === ch.id);
     const project = sess?.project ?? "?";
     const msg = ch.msg || sess?.last_msg || "";
-    const preview = msg.length > 200 ? msg.slice(0, 200) + "…" : msg;
-    showBubble(project, preview, ch.to as "done" | "waiting" | "failed");
+    const preview = msg.length > 200 ? `${msg.slice(0, 200)}...` : msg;
+    const kind = ch.to as "done" | "waiting" | "failed";
+    showBubble(project, preview, kind);
   }
 });
 
-// Right-click → panel
+// Right-click -> panel
 canvas.addEventListener("contextmenu", async (ev) => {
   ev.preventDefault();
   ev.stopPropagation();

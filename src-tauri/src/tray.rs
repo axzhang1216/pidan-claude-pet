@@ -2,7 +2,7 @@ use anyhow::Result;
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem},
     tray::{TrayIcon, TrayIconBuilder},
-    AppHandle, Manager,
+    AppHandle, Manager, WebviewWindow, WebviewWindowBuilder,
 };
 
 pub fn build(app: &AppHandle) -> Result<TrayIcon> {
@@ -33,12 +33,37 @@ fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
             }
         }
         "config" => {
-            if let Some(w) = app.get_webview_window("config") {
-                let _ = w.show();
-                let _ = w.set_focus();
+            if let Err(err) = show_config_window(app) {
+                tracing::error!(?err, "failed to open config window");
             }
         }
         "quit" => app.exit(0),
         _ => {}
     }
+}
+
+fn show_config_window(app: &AppHandle) -> Result<()> {
+    let window = match app.get_webview_window("config") {
+        Some(window) => window,
+        None => {
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|window| window.label == "config")
+                .ok_or_else(|| anyhow::anyhow!("missing config window definition"))?;
+
+            WebviewWindowBuilder::from_config(app, config)?.build()?
+        }
+    };
+
+    reveal_window(&window)
+}
+
+fn reveal_window(window: &WebviewWindow) -> Result<()> {
+    let _ = window.unminimize();
+    window.show()?;
+    window.set_focus()?;
+    Ok(())
 }
