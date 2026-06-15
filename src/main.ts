@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { PhysicalPosition } from "@tauri-apps/api/dpi";
 import bruceSheetUrl from "./assets/pets/bruce/spritesheet.webp";
 import pidanSheetUrl from "./assets/pets/pidan/spritesheet.webp";
 
@@ -123,7 +124,9 @@ function setState(s: State) {
 const win = getCurrentWindow();
 
 let dragLastX = 0;
-let dragDirTimer: ReturnType<typeof setTimeout> | null = null;
+let dragLastY = 0;
+let dragWinX = 0;
+let dragWinY = 0;
 
 // Remove CSS drag region so we can handle it manually
 (canvas.style as any).webkitAppRegion = "no-drag";
@@ -134,26 +137,28 @@ canvas.addEventListener("pointerdown", async (ev) => {
   if (ev.button !== 0) return;
   isDragging = true;
   dragLastX = ev.screenX;
+  dragLastY = ev.screenY;
+
+  // Get current window position for manual drag
+  try {
+    const pos = await win.outerPosition();
+    dragWinX = pos.x;
+    dragWinY = pos.y;
+  } catch { /* ignore */ }
+
   setRow(ROW.drag_right);
-
-  // Use pointer capture so we keep getting pointermove even after startDragging
   canvas.setPointerCapture(ev.pointerId);
-
-  await win.startDragging();
-
-  // startDragging resolves immediately on Windows (fires WM_NCLBUTTONDOWN)
-  // mousemove/mouseup may not fire after that — use a fallback timer
-  if (dragDirTimer) clearTimeout(dragDirTimer);
-  dragDirTimer = setTimeout(() => {
-    isDragging = false;
-    setRow(appStateRow);
-  }, 2000);
 });
 
 canvas.addEventListener("pointermove", (ev) => {
   if (!isDragging) return;
   const dx = ev.screenX - dragLastX;
+  const dy = ev.screenY - dragLastY;
   dragLastX = ev.screenX;
+  dragLastY = ev.screenY;
+  dragWinX += dx;
+  dragWinY += dy;
+  win.setPosition(new PhysicalPosition(dragWinX, dragWinY));
   if (Math.abs(dx) > 2) {
     setRow(dx > 0 ? ROW.drag_right : ROW.drag_left);
   }
@@ -162,7 +167,6 @@ canvas.addEventListener("pointermove", (ev) => {
 canvas.addEventListener("pointerup", () => {
   if (!isDragging) return;
   isDragging = false;
-  if (dragDirTimer) { clearTimeout(dragDirTimer); dragDirTimer = null; }
   setRow(appStateRow);
 });
 
@@ -306,8 +310,20 @@ ctxMenu.addEventListener("click", async (ev) => {
   if (action === "clear") {
     clearAllBubbles();
   } else if (action === "config") {
-    const w = await WebviewWindow.getByLabel("config");
-    if (w) { await w.show(); await w.setFocus(); }
+    let w = await WebviewWindow.getByLabel("config");
+    if (!w) {
+      w = new WebviewWindow("config", {
+        url: "config.html",
+        title: "皮蛋配置",
+        width: 360,
+        height: 260,
+        resizable: false,
+        visible: true,
+      });
+    } else {
+      await w.show();
+      await w.setFocus();
+    }
   } else if (action === "update") {
     target.textContent = "检查中…";
     showCtx();
