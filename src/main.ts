@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import bruceSheetUrl from "./assets/pets/bruce/spritesheet.webp";
 import pidanSheetUrl from "./assets/pets/pidan/spritesheet.webp";
@@ -240,6 +241,18 @@ function showBubble(project: string, msg: string, kind: "done" | "waiting" | "fa
   openBubbles++;
 }
 
+function clearAllBubbles() {
+  const bubbles = bubblesEl.querySelectorAll(".bubble") as NodeListOf<HTMLDivElement>;
+  bubbles.forEach((el) => {
+    el.classList.add("bubble--dismissing");
+    el.addEventListener("animationend", () => {
+      el.remove();
+      openBubbles = Math.max(0, openBubbles - 1);
+      checkIdleFallback();
+    }, { once: true });
+  });
+}
+
 // --- Snapshot listener ---
 listen<Snapshot>("pidan://snapshot", (e) => {
   currentSnap = e.payload;
@@ -257,14 +270,65 @@ listen<Snapshot>("pidan://snapshot", (e) => {
   }
 });
 
-// Right-click -> panel
-canvas.addEventListener("contextmenu", async (ev) => {
+// --- Context menu ---
+const ctxMenu = document.getElementById("ctx-menu")!;
+let ctxVisible = false;
+
+function showCtx() {
+  ctxMenu.style.display = "block";
+  ctxVisible = true;
+}
+function hideCtx() {
+  ctxMenu.style.display = "none";
+  ctxVisible = false;
+}
+
+// Right-click on pet → show context menu
+canvas.addEventListener("contextmenu", (ev) => {
   ev.preventDefault();
   ev.stopPropagation();
-  const panel = await WebviewWindow.getByLabel("panel");
-  if (!panel) return;
-  const pos = await win.outerPosition();
-  await panel.setPosition(new LogicalPosition(pos.x - 320 - 8, pos.y));
-  await panel.show();
-  await panel.setFocus();
+  showCtx();
+});
+
+// Click anywhere outside menu → close it
+document.addEventListener("mousedown", (ev) => {
+  if (ctxVisible && !ctxMenu.contains(ev.target as Node)) {
+    hideCtx();
+  }
+});
+
+// Menu item actions
+ctxMenu.addEventListener("click", async (ev) => {
+  const target = ev.target as HTMLElement;
+  if (!target.classList.contains("ctx-item")) return;
+  const action = target.dataset.action;
+  hideCtx();
+  if (action === "clear") {
+    clearAllBubbles();
+  } else if (action === "config") {
+    const w = await WebviewWindow.getByLabel("config");
+    if (w) { await w.show(); await w.setFocus(); }
+  } else if (action === "update") {
+    target.textContent = "检查中…";
+    showCtx();
+    try {
+      const resp = await fetch("https://api.github.com/repos/axzhang1216/pidan-claude-pet/releases/latest");
+      if (!resp.ok) throw new Error(String(resp.status));
+      const data = await resp.json();
+      const tag: string = data.tag_name ?? "";
+      const current = await (window as any).__TAURI__?.app?.getVersion() ?? "0.1.4";
+      if (tag && tag !== `v${current}`) {
+        const url: string = data.html_url ?? "";
+        showBubble("皮蛋", `发现新版本 ${tag}，前往 GitHub 下载`, "done");
+        if (url) await openUrl(url);
+      } else {
+        showBubble("皮蛋", "当前已是最新版本", "done");
+      }
+    } catch {
+      showBubble("皮蛋", "检查更新失败，请稍后重试", "failed");
+    }
+    target.textContent = "检查更新";
+  } else if (action === "quit") {
+    await invoke("quit_app");
+  }
 });

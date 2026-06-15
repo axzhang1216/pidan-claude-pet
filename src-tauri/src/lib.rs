@@ -39,7 +39,8 @@ pub fn run() {
             get_config,
             set_config,
             reset_window_pos,
-            check_update
+            check_update,
+            quit_app
         ])
         .on_window_event(|window, event| {
             match event {
@@ -185,6 +186,11 @@ fn set_config(dto: ConfigDto) -> Result<(), String> {
         c.skin = dto.skin;
     }
     config::save(&c).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
 }
 
 #[tauri::command]

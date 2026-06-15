@@ -119,3 +119,50 @@ html, body {
 .bubble--waiting .bubble-label {
   color: #ad1457;
 }
+
+.bubble--dismissing {
+  animation: bubbleDismiss 0.2s ease-out forwards;
+}
+
+@keyframes bubbleDismiss {
+  to { transform: translateY(-10px); opacity: 0; max-height: 0; padding: 0 9px; margin: 0; }
+}
+
+/* Context menu */
+#ctx-menu {
+  display: none;
+  position: absolute;
+  top: 120px;
+  left: 12px;
+  z-index: 9999;
+  background: rgba(30, 30, 35, 0.96);
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font: 12px/1 system-ui, sans-serif;
+  min-width: 120px;
+  padding: 4px 0;
+  animation: ctxFadeIn 0.1s ease-out;
+  -webkit-app-region: no-drag;
+}
+
+@keyframes ctxFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ctx-item {
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ctx-item:hover {
+  background: rgba(74, 158, 255, 0.25);
+}
+
+.ctx-sep {
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 3px 0;
+}
