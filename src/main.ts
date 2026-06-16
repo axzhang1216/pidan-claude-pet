@@ -125,8 +125,6 @@ const win = getCurrentWindow();
 
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let dragWinX = 0;
-let dragWinY = 0;
 let dragDirTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Remove CSS drag region so we can handle it manually
@@ -150,8 +148,6 @@ canvas.addEventListener("pointerdown", async (ev) => {
   // Record offset from pointer to window top-left
   try {
     const pos = await win.outerPosition();
-    dragWinX = pos.x;
-    dragWinY = pos.y;
     dragOffsetX = ev.screenX - pos.x;
     dragOffsetY = ev.screenY - pos.y;
   } catch { /* ignore */ }
