@@ -5,6 +5,9 @@
   "windows": ["pet", "panel", "config"],
   "permissions": [
     "core:default",
+    "core:window:allow-set-position",
+    "core:window:allow-outer-position",
+    "core:window:allow-start-dragging",
     "opener:default",
     "notification:default"
   ]

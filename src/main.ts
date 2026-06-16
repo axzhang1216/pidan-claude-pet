@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { PhysicalPosition } from "@tauri-apps/api/dpi";
+import { LogicalPosition } from "@tauri-apps/api/dpi";
 import bruceSheetUrl from "./assets/pets/bruce/spritesheet.webp";
 import pidanSheetUrl from "./assets/pets/pidan/spritesheet.webp";
 
@@ -123,51 +123,56 @@ function setState(s: State) {
 // --- Drag with directional animation ---
 const win = getCurrentWindow();
 
-let dragLastX = 0;
-let dragLastY = 0;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 let dragWinX = 0;
 let dragWinY = 0;
+let dragDirTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Remove CSS drag region so we can handle it manually
 (canvas.style as any).webkitAppRegion = "no-drag";
 const petArea = document.getElementById("pet-area")!;
 (petArea.style as any).webkitAppRegion = "no-drag";
 
+function stopDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+  if (dragDirTimer) { clearTimeout(dragDirTimer); dragDirTimer = null; }
+  setRow(appStateRow);
+}
+
 canvas.addEventListener("pointerdown", async (ev) => {
   if (ev.button !== 0) return;
   isDragging = true;
-  dragLastX = ev.screenX;
-  dragLastY = ev.screenY;
+  setRow(ROW.drag_right);
+  canvas.setPointerCapture(ev.pointerId);
 
-  // Get current window position for manual drag
+  // Record offset from pointer to window top-left
   try {
     const pos = await win.outerPosition();
     dragWinX = pos.x;
     dragWinY = pos.y;
+    dragOffsetX = ev.screenX - pos.x;
+    dragOffsetY = ev.screenY - pos.y;
   } catch { /* ignore */ }
 
-  setRow(ROW.drag_right);
-  canvas.setPointerCapture(ev.pointerId);
+  // Fallback timer in case pointerup never fires
+  if (dragDirTimer) clearTimeout(dragDirTimer);
+  dragDirTimer = setTimeout(stopDrag, 5000);
 });
 
 canvas.addEventListener("pointermove", (ev) => {
   if (!isDragging) return;
-  const dx = ev.screenX - dragLastX;
-  const dy = ev.screenY - dragLastY;
-  dragLastX = ev.screenX;
-  dragLastY = ev.screenY;
-  dragWinX += dx;
-  dragWinY += dy;
-  win.setPosition(new PhysicalPosition(dragWinX, dragWinY));
-  if (Math.abs(dx) > 2) {
-    setRow(dx > 0 ? ROW.drag_right : ROW.drag_left);
+  const targetX = ev.screenX - dragOffsetX;
+  const targetY = ev.screenY - dragOffsetY;
+  win.setPosition(new LogicalPosition(targetX, targetY));
+  if (Math.abs(ev.movementX) > 2) {
+    setRow(ev.movementX > 0 ? ROW.drag_right : ROW.drag_left);
   }
 });
 
 canvas.addEventListener("pointerup", () => {
-  if (!isDragging) return;
-  isDragging = false;
-  setRow(appStateRow);
+  stopDrag();
 });
 
 // Load initial skin from config
