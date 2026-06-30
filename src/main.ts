@@ -189,7 +189,7 @@ let currentSnap: Snapshot = { main_state: "idle", sessions: [] };
 function checkIdleFallback() {
   if (openBubbles > 0) return;
   const hasActive = currentSnap.sessions.some((s) => s.state === "working");
-  if (!hasActive) setState("idle");
+  setState(hasActive ? "working" : "idle");
 }
 
 function showBubble(project: string, msg: string, kind: "done" | "waiting" | "failed" = "done") {
@@ -248,6 +248,10 @@ function showBubble(project: string, msg: string, kind: "done" | "waiting" | "fa
 
 function clearAllBubbles() {
   const bubbles = bubblesEl.querySelectorAll(".bubble") as NodeListOf<HTMLDivElement>;
+  if (bubbles.length === 0) {
+    checkIdleFallback();
+    return;
+  }
   bubbles.forEach((el) => {
     el.classList.add("bubble--dismissing");
     el.addEventListener("animationend", () => {
