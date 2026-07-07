@@ -145,11 +145,16 @@ canvas.addEventListener("pointerdown", async (ev) => {
   setRow(ROW.drag_right);
   canvas.setPointerCapture(ev.pointerId);
 
-  // Record offset from pointer to window top-left
+  // Record offset from pointer to window top-left.
+  // outerPosition() is in physical pixels; ev.screenX/Y and LogicalPosition
+  // are in logical pixels. Convert via scaleFactor so they stay in the same
+  // unit — otherwise on HiDPI (125%/150%) screens the offset is wrong and the
+  // window jumps toward the bottom-right on every move.
   try {
+    const scale = await win.scaleFactor();
     const pos = await win.outerPosition();
-    dragOffsetX = ev.screenX - pos.x;
-    dragOffsetY = ev.screenY - pos.y;
+    dragOffsetX = ev.screenX - pos.x / scale;
+    dragOffsetY = ev.screenY - pos.y / scale;
   } catch { /* ignore */ }
 
   // Fallback timer in case pointerup never fires
